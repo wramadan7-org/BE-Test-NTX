@@ -14,7 +14,7 @@ module.exports = (app) => {
 
   router.get(
     "/refactor1",
-    // [exampleMiddleware.exampleMiddlewareFunction],
+    [exampleMiddleware.exampleMiddlewareFunction],
     exampleController.refactoreMe1
   );
 

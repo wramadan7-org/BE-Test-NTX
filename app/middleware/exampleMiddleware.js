@@ -8,7 +8,7 @@ exampleMiddlewareFunction = (req, res, next) => {
 };
 
 const verify = {
-  exampleMiddlewareFunction: this.exampleMiddlewareFunction,
+  exampleMiddlewareFunction: exampleMiddlewareFunction,
 };
 
 module.exports = verify;
