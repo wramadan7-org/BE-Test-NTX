@@ -3,10 +3,12 @@ const db = require("../models");
 
 exampleMiddlewareFunction = (req, res, next) => {
   // do something
+  console.log("Middleware");
+  next();
 };
 
 const verify = {
-  exampleMiddlewareFunction: exampleMiddlewareFunction,
+  exampleMiddlewareFunction: this.exampleMiddlewareFunction,
 };
 
 module.exports = verify;
