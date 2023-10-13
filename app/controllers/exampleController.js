@@ -1,6 +1,10 @@
 const db = require('../models');
 // const Model = db.Model;
 // const { Op } = require("sequelize");
+const { WebSocket } = require('ws');
+const dotenv = require('dotenv').config();
+const axios = require('axios');
+const { HOST, PORT } = process.env;
 
 exports.refactoreMe1 = (req, res) => {
   // function ini sebenarnya adalah hasil survey dri beberapa pertnayaan, yang mana nilai dri jawaban tsb akan di store pada array seperti yang ada di dataset
@@ -39,8 +43,9 @@ exports.refactoreMe2 = async (req, res) => {
       `INSERT INTO "surveys" ("userId", "values", "createdAt", "updatedAt") VALUES (${userId}, '{${values}}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
     );
 
-    await db.sequelize
-      .query(`UPDATE users SET dosurvey = false WHERE id = ${userId}`)
+    await db.sequelize.query(
+      `UPDATE users SET dosurvey = false WHERE id = ${userId}`
+    );
 
     res.status(201).send({
       statusCode: 201,
@@ -48,7 +53,7 @@ exports.refactoreMe2 = async (req, res) => {
       success: true,
       data: {
         userId,
-        values
+        values,
       },
     });
   } catch (error) {
@@ -59,38 +64,36 @@ exports.refactoreMe2 = async (req, res) => {
       success: false,
     });
   }
-  // db.sequelize
-  //   .query(
-  //     `INSERT INTO "surveys" ("userId", "values", "createdAt", "updatedAt") VALUES (${userId}, '{${values}}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-  //   )
-  //   .then((data) => {
-  //     db.sequelize
-  //       .query(`UPDATE users SET dosurvey = false WHERE id = ${userId}`)
-  //       .then(() => {
-  //         console.log('Success');
-  //       })
-  //       .catch((err) => {
-  //         console.error(err);
-  //       });
-  //     res.status(201).send({
-  //       statusCode: 201,
-  //       message: 'Survey sent successfully!',
-  //       success: true,
-  //       data,
-  //     });
-  //   })
-  //   .catch((err) => {
-  //     console.error(err);
-  //     res.status(500).send({
-  //       statusCode: 500,
-  //       message: 'Cannot post survey.',
-  //       success: false,
-  //     });
-  //   });
 };
 
 exports.callmeWebSocket = (req, res) => {
   // do something
+  const api = 'https://livethreatmap.radware.com/api/map/attacks?limit=10';
+
+  const socket = new WebSocket(`ws://${HOST}:${PORT}`);
+
+  socket.addEventListener('open', (event) => {
+    console.log('Connecting to server');
+
+    const fetch = axios
+      .get(api)
+      .then((data) => {
+        // socket.send berfungsi untuk mengirim data dari klient ke server
+        socket.send(JSON.stringify(data.data));
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  });
+
+  // socket.addEventListener('message') berfungsi untuk menerima data dari server untuk klien
+  // socket.addEventListener('message', (message) => {
+  //   console.log('Menerima pesan dari server', message);
+  // });
+
+  socket.addEventListener('close', () => {
+    console.log('Client close');
+  });
 };
 
 exports.getData = (req, res) => {
