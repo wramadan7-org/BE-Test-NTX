@@ -55,6 +55,8 @@ INSERT INTO public.surveys ("values","createdAt","updatedAt","userId") VALUES
 	 ('{90,100,100,80,90}','2022-12-22 09:08:50.908+07','2022-12-22 09:08:50.908+07',2),
 	 ('{80,80,80,80,80}','2022-12-22 21:05:32.317+07','2022-12-22 21:05:32.317+07',3);
 
+-- public.attackers definition
+
 CREATE TABLE public.attackers (
   id SERIAL4 PRIMARY KEY,
   "sourceCountry" VARCHAR(3) NOT NULL,
