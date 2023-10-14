@@ -26,7 +26,7 @@ module.exports = (app) => {
 
   router.get(
     "/attacker",
-    [exampleMiddleware.exampleMiddlewareFunction],
+    // [exampleMiddleware.exampleMiddlewareFunction, exampleMiddleware.],
     exampleController.getData
   )
 

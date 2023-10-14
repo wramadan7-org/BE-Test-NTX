@@ -4,6 +4,8 @@ const db = require("../models");
 const { WebSocket } = require("ws");
 const dotenv = require("dotenv").config();
 const axios = require("axios");
+const { connectRedis } = require("../config/redis");
+
 const { HOST, PORT } = process.env;
 
 exports.refactoreMe1 = (req, res) => {
@@ -67,13 +69,21 @@ exports.refactoreMe2 = async (req, res) => {
   }
 };
 
-exports.callmeWebSocket = (req, res) => {
+exports.callmeWebSocket = async (req, res) => {
   // do something
   const api = "https://livethreatmap.radware.com/api/map/attacks?limit=10";
 
   const socket = new WebSocket(`ws://${HOST}:${PORT}`);
 
-  socket.addEventListener("open", (event) => {
+  const client = await connectRedis();
+  const checkKey = await client.get("attackers");
+
+  if (checkKey) {
+    await client.del("attackers")
+    await client.quit();
+  }
+
+  await socket.addEventListener("open", (event) => {
     console.log("Connecting to server");
 
     const fetch = axios
@@ -92,7 +102,7 @@ exports.callmeWebSocket = (req, res) => {
   //   console.log('Menerima pesan dari server', message);
   // });
 
-  socket.addEventListener("close", () => {
+  await socket.addEventListener("close", () => {
     console.log("Client close");
   });
 };
@@ -100,29 +110,43 @@ exports.callmeWebSocket = (req, res) => {
 exports.getData = async (req, res) => {
   // do something
   try {
-    const attackers = await db.sequelize.query(`SELECT 
-      type,
-      SUM("destinationCountryCount" + "sourceCountryCount")::integer as "totalData"
-      FROM (
-          SELECT 
-              a.id, 
-              obj->>'type' AS type, 
-              COUNT(DISTINCT obj->>'destinationCountry')::integer as "destinationCountryCount", 
-              COUNT(DISTINCT obj->>'sourceCountry')::integer as "sourceCountryCount"
-          FROM attackers a
-          CROSS JOIN jsonb_array_elements(a.values) AS obj
-          GROUP BY type, a.id
-      ) AS subquery
-      GROUP BY type
-      `);
+    const client = await connectRedis();
+    const checkKey = await client.get("attackers");
+    let attackers;
+
+    if (!checkKey) {
+      console.log("GET FROM DB");
+      attackers = await db.sequelize.query(`SELECT 
+        type,
+        SUM("destinationCountryCount" + "sourceCountryCount")::integer as "totalData"
+        FROM (
+            SELECT 
+                a.id, 
+                obj->>'type' AS type, 
+                COUNT(DISTINCT obj->>'destinationCountry')::integer as "destinationCountryCount", 
+                COUNT(DISTINCT obj->>'sourceCountry')::integer as "sourceCountryCount"
+            FROM attackers a
+            CROSS JOIN jsonb_array_elements(a.values) AS obj
+            GROUP BY type, a.id
+        ) AS subquery
+        GROUP BY type
+        `);
+
+      await client.set("attackers", JSON.stringify(attackers));
+    } else {
+      console.log("GET FROM REDIS");
+      attackers = JSON.parse(checkKey);
+    }
 
     const label = [];
     const total = [];
 
-    const refactorData = attackers[0].forEach((item) => {
+    const refactorData = attackers[0]?.forEach((item) => {
       label.push(item.type);
       total.push(item.totalData);
     });
+
+    client.quit();
 
     res.status(200).send({
       statusCode: 200,
