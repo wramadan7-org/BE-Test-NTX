@@ -24,5 +24,11 @@ module.exports = (app) => {
     exampleController.refactoreMe2
   );
 
+  router.get(
+    "/attacker",
+    [exampleMiddleware.exampleMiddlewareFunction],
+    exampleController.getData
+  )
+
   app.use("/api/data", router);
 };

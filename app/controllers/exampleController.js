@@ -1,9 +1,9 @@
-const db = require('../models');
+const db = require("../models");
 // const Model = db.Model;
 // const { Op } = require("sequelize");
-const { WebSocket } = require('ws');
-const dotenv = require('dotenv').config();
-const axios = require('axios');
+const { WebSocket } = require("ws");
+const dotenv = require("dotenv").config();
+const axios = require("axios");
 const { HOST, PORT } = process.env;
 
 exports.refactoreMe1 = (req, res) => {
@@ -22,6 +22,7 @@ exports.refactoreMe1 = (req, res) => {
       res.status(200).send({
         statusCode: 200,
         success: true,
+        message: "Surveys get successfully!",
         data: resultValues,
       });
     })
@@ -29,8 +30,8 @@ exports.refactoreMe1 = (req, res) => {
       console.error(err);
       res.status(500).send({
         statusCode: 500,
-        message: "Can't get data surveys",
         success: false,
+        message: "Can't get data surveys",
       });
     });
 };
@@ -49,8 +50,8 @@ exports.refactoreMe2 = async (req, res) => {
 
     res.status(201).send({
       statusCode: 201,
-      message: 'Survey sent successfully!',
       success: true,
+      message: "Survey sent successfully!",
       data: {
         userId,
         values,
@@ -60,20 +61,20 @@ exports.refactoreMe2 = async (req, res) => {
     console.error(error);
     res.status(500).send({
       statusCode: 500,
-      message: 'Cannot post survey.',
       success: false,
+      message: "Cannot post survey.",
     });
   }
 };
 
 exports.callmeWebSocket = (req, res) => {
   // do something
-  const api = 'https://livethreatmap.radware.com/api/map/attacks?limit=10';
+  const api = "https://livethreatmap.radware.com/api/map/attacks?limit=10";
 
   const socket = new WebSocket(`ws://${HOST}:${PORT}`);
 
-  socket.addEventListener('open', (event) => {
-    console.log('Connecting to server');
+  socket.addEventListener("open", (event) => {
+    console.log("Connecting to server");
 
     const fetch = axios
       .get(api)
@@ -91,11 +92,53 @@ exports.callmeWebSocket = (req, res) => {
   //   console.log('Menerima pesan dari server', message);
   // });
 
-  socket.addEventListener('close', () => {
-    console.log('Client close');
+  socket.addEventListener("close", () => {
+    console.log("Client close");
   });
 };
 
-exports.getData = (req, res) => {
+exports.getData = async (req, res) => {
   // do something
+  try {
+    const attackers = await db.sequelize.query(`SELECT 
+      type,
+      SUM("destinationCountryCount" + "sourceCountryCount")::integer as "totalData"
+      FROM (
+          SELECT 
+              a.id, 
+              obj->>'type' AS type, 
+              COUNT(DISTINCT obj->>'destinationCountry')::integer as "destinationCountryCount", 
+              COUNT(DISTINCT obj->>'sourceCountry')::integer as "sourceCountryCount"
+          FROM attackers a
+          CROSS JOIN jsonb_array_elements(a.values) AS obj
+          GROUP BY type, a.id
+      ) AS subquery
+      GROUP BY type
+      `);
+
+    const label = [];
+    const total = [];
+
+    const refactorData = attackers[0].forEach((item) => {
+      label.push(item.type);
+      total.push(item.totalData);
+    });
+
+    res.status(200).send({
+      statusCode: 200,
+      success: true,
+      message: "Attackers get successfully!",
+      data: {
+        label,
+        total,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      statusCode: 500,
+      success: false,
+      message: "Cannot get attackers.",
+    });
+  }
 };
