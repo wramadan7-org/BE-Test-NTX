@@ -1,4 +1,4 @@
-const { exampleMiddleware } = require("../middleware");
+const { exampleMiddleware, admin } = require("../middleware");
 const exampleController = require("../controllers/exampleController");
 
 module.exports = (app) => {
@@ -14,7 +14,7 @@ module.exports = (app) => {
 
   router.get(
     "/refactor1",
-    [exampleMiddleware.exampleMiddlewareFunction],
+    [exampleMiddleware],
     exampleController.refactoreMe1
   );
 
@@ -26,7 +26,7 @@ module.exports = (app) => {
 
   router.get(
     "/attacker",
-    // [exampleMiddleware.exampleMiddlewareFunction, exampleMiddleware.],
+    [exampleMiddleware, admin],
     exampleController.getData
   )
 
