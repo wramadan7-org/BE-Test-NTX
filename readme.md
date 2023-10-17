@@ -37,6 +37,8 @@ Berikut beberapa note dari masing-masing point
 
 2. Saya membuat server websocket di file server.js, kemudian untuk klien di controller (callmeWebSocket function)
 
+3. -
+
 4. Saya membuat kokensi sederhana, dan harus install package redis (npm i redis). Membuat function untuk menghubungkan redis dengan server, kemudian jalankan redis di file server.js untuk pengecekan apakah sudah berhasil terhubung atau tidak. Pada controller get data, get data dari redis dengan key "attackers". Dan untuk setiap 3 menit sekali, saya hapus key "attackers" di redis, saya implement di function callmeWebSocket.
 
 5. Saya membuat 2 fungsi di folder helper, yaitu fungsi untuk signin dan verify JWT. Saya juga membuat role type dengan penamaan file role.js di folder config. Untuk metode Authorization, harap memakai Bearer Token dengan hasil token kita generate manual di website jwt.io, ubah data di bagian payload data dan verify signature.
